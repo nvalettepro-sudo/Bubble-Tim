@@ -137,3 +137,60 @@ body{background:var(--ciel);color:var(--encre);font-family:var(--police);
 /* REGLES : tout est cubique jamais d arrondi, palette terre herbe pierre,
    nuages blancs rectangulaires dans le ciel */
 ```
+
+
+---
+
+## 7 · Console 16 bits
+/* STYLE : CONSOLE 16 BITS */
+:root{
+  /* Palette : 3 tons par couleur — clair, base, ombre. C'est LA
+     signature du 16 bits face au 8 bits, qui n'en avait qu'un ou deux. */
+  --ciel-clair:#9bd4ff; --ciel:#5aa9e6; --ciel-ombre:#3d7ebf;
+  --herbe-clair:#8fd94a; --herbe:#5aa832; --herbe-ombre:#2f6b1e;
+  --terre-clair:#c08b4f; --terre:#8b5a2b; --terre-ombre:#5c3a1a;
+  --peau-clair:#ffd9a0; --peau:#e8a76a; --peau-ombre:#a86b3c;
+  --rouge-clair:#ff8a7a; --rouge:#e04f3d; --rouge-ombre:#8f2618;
+  --contour:#2b1b2e;   /* jamais du noir pur : violet très sombre */
+  --police:monospace;
+}
+canvas{image-rendering:pixelated; image-rendering:crisp-edges}
+body{background:var(--ciel-ombre); margin:0; display:grid; place-items:center}
+
+REGLES DE RENDU 16 BITS — à respecter dans le code du jeu
+
+RESOLUTION
+- Le jeu se dessine sur un canvas de 320 x 224 pixels virtuels, jamais plus.
+- Ce canvas est agrandi par un facteur ENTIER (x2, x3, x4) via CSS. Jamais
+  un agrandissement non entier : ça floute les pixels.
+- ctx.imageSmoothingEnabled = false, obligatoire.
+
+DESSIN
+- Tout est dessiné avec fillRect sur la grille de pixels virtuelle.
+- Aucune forme arrondie, aucun cercle lissé, aucun dégradé CSS.
+- Un dégradé se simule par tramage (dithering) : alternance de deux
+  couleurs en damier. C'est ce que faisaient les vraies consoles.
+
+OMBRAGE — le point le plus important
+- Chaque élément utilise 3 tons de sa couleur : clair en haut, base au
+  milieu, ombre en bas. La lumière vient toujours d'en haut à gauche.
+- Un aplat d'une seule couleur fait 8 bits, pas 16 bits.
+
+CONTOURS
+- Chaque personnage a un contour d'un pixel, en --contour.
+- Jamais du noir pur : un violet ou brun très sombre, plus vivant.
+
+DECOR
+- Le fond défile sur 2 ou 3 couches à des vitesses différentes (parallaxe) :
+  le lointain lent, le proche rapide. C'est ce qui donne la profondeur.
+- Les éléments de décor se répètent par tuiles de 16 x 16 pixels.
+
+ANIMATION
+- 2 à 4 images par animation, pas plus. Changement toutes les 8 à 12 images
+  par seconde, jamais en continu.
+- Les personnages ont une légère oscillation verticale au repos (1 pixel).
+
+TEXTE
+- Le texte est dessiné sur le canvas, aligné sur la grille de pixels.
+- Pas de police web : les vraies consoles avaient des polices dessinées.
+  Une police monospace agrandie sans lissage fait l'affaire au départ.
