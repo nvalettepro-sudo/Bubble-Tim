@@ -18,3 +18,4 @@ Jeu de Tim. Odin et son bubble tea.
 |---|---|
 | v1 | version importée depuis claude.ai |
 | v2 | nouveau look « console 16 bits » : petit écran 320x224 agrandi x2/x3/x4, 3 nuances par couleur, contour violet foncé, ville en parallaxe, tramage à la place des dégradés. Le jeu (règles, vitesses, difficulté) ne change pas. |
+| v3 | nouveau look « dessin animé peint » : plein écran 960x540 en courbes, gros trait d'encre plus épais dessous, ombrage à plat en deux tons avec liseré clair, ville peinte et floutée sur 2 couches + avant-plan sombre, grandes bandes de lumière chaude en diagonale sur la rue, trame halftone discrète. Le jeu (règles, vitesses, difficulté) ne change toujours pas. |
