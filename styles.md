@@ -1,196 +1,73 @@
-# 02 · styles.md
+# styles.md
 
-Fichier de référence du projet « Les jeux de Tim ».
-Choisir le style qui colle le mieux à l'idée, appliquer son bloc à la lettre, RÈGLES comprises.
-La ligne **Pour Tim** est la formulation à utiliser pour lui parler du style. Ne jamais employer le nom technique devant lui.
 
----
+## Dessin animé peint
 
-## 1 · Pixel rétro
-
-**Pour Tim :** comme les vieux jeux, tout en petits carrés bien nets.
-**Va bien avec :** action, plateforme, tir, course, tout ce qui est rapide.
+**Pour Tim :** comme un dessin animé, avec des gros traits noirs autour des
+personnages et des décors peints à la main.
+**Va bien avec :** action, bagarre, aventure, tout ce qui a des personnages
+qui bougent beaucoup.
 
 ```css
-/* STYLE : PIXEL RETRO */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* STYLE : DESSIN ANIME PEINT */
 :root{
-  --fond:#22223b;  --vert:#38b764;   --encre:#fffffe;
-  --c1:#f6ae2d;    --c2:#ef476f;     --c3:#33a1fd;
-  --police:'Press Start 2P', monospace;
-  --arrondi:0px;   --ombre:4px 4px 0 rgba(0,0,0,.55);
+  /* Lumière chaude de fin d'après-midi — la signature du style */
+  --lumiere:#ffd9a0;   --lumiere-forte:#ffb347;
+  --ambre:#f0a04b;     --ambre-sombre:#c66b28;
+  /* Les ombres ne sont jamais grises : elles tirent vers le bleu-violet */
+  --ombre-froide:#4a5580;  --ombre-profonde:#2d3355;
+  /* Contour d'encre : brun-violet très sombre, jamais du noir pur */
+  --encre:#2a1f2d;
+  --peau:#f5b98a;      --peau-ombre:#c07a52;
+  --rouge:#e8503a;     --bleu:#3f6fa8;   --creme:#f7ecd8;
+  --police:system-ui, sans-serif;
 }
-body{background:var(--fond);color:var(--encre);font-family:var(--police);
-     image-rendering:pixelated}
-/* REGLES : formes carrees, 4 couleurs max, contour noir 3px,
-   ombre dure jamais floue, aucun degrade, texte en MAJUSCULES */
+canvas{image-rendering:auto}  /* surtout PAS pixelated */
+body{background:var(--ombre-profonde); margin:0; display:grid; place-items:center}
 ```
 
----
+REGLES DE RENDU — DESSIN ANIME PEINT
 
-## 2 · Néon arcade
+AUCUN PIXEL
+- Le canvas est en pleine résolution, ctx.imageSmoothingEnabled = true.
+- Les formes sont dessinées avec des courbes (bezierCurveTo, arc), jamais
+  avec des fillRect empilés.
+- Rien n'est aligné sur une grille.
 
-**Pour Tim :** tout est noir, et les choses brillent dans le noir.
-**Va bien avec :** espace, vitesse, futuriste, rythme, jeux de réflexe.
+LE TRAIT D'ENCRE — le point le plus important
+- Chaque personnage et chaque objet du premier plan a un contour épais,
+  3 à 5 pixels, en --encre.
+- Le trait est plus épais sur le dessous et l'extérieur des formes, plus
+  fin sur le dessus. C'est ce qui donne l'aspect dessiné à la main.
+- Jamais de noir pur : toujours --encre, un brun-violet sombre.
+- Les éléments du décor lointain n'ont PAS de contour, ou un contour très
+  fin et clair. C'est ce qui fait ressortir les personnages.
 
-```css
-/* STYLE : NEON ARCADE */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
-:root{
-  --fond:#05010d;  --encre:#e9f7ff;
-  --c1:#00f0ff;    --c2:#ff00e5;    --c3:#adff2f;
-  --police:'Orbitron', sans-serif;
-  --arrondi:6px;   --halo:0 0 12px currentColor, 0 0 30px currentColor;
-}
-body{background:var(--fond);color:var(--encre);font-family:var(--police);
-     letter-spacing:.06em}
-/* REGLES : fond tres noir, formes vides cerclees de lumiere,
-   grille fine en fond, jamais d aplat de couleur, tout ce qui compte brille */
-```
+OMBRAGE A PLAT (cel shading)
+- Deux tons par surface : la couleur de base, et une zone d'ombre à bord
+  net. Jamais de dégradé sur un personnage.
+- La limite entre les deux est une courbe franche, pas un flou.
+- La lumière vient d'un côté et reste la même pour tout l'écran.
 
----
+PROFONDEUR
+- Le fond est plus clair, moins saturé, et légèrement flou (filter: blur(2px)).
+- Les personnages sont saturés et contrastés : ils doivent sauter aux yeux.
+- Le tout premier plan est très sombre, presque en silhouette.
+- Trois couches minimum qui défilent à des vitesses différentes.
 
-## 3 · Papier découpé
+LUMIERE
+- Une grande zone de lumière chaude traverse le sol en diagonale.
+- Les personnages projettent une ombre ovale douce sous leurs pieds.
+- Un liseré clair d'un pixel sur le bord des personnages du côté éclairé.
 
-**Pour Tim :** tout est rond et doux, comme découpé dans du papier de couleur.
-**Va bien avec :** animaux, aventure calme, puzzle, rangement, construction.
-
-```css
-/* STYLE : PAPIER DECOUPE */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap');
-:root{
-  --fond:#fdf6e3;  --encre:#3d3b52;
-  --c1:#ff8a5c;    --c2:#7fd8be;    --c3:#a5c8ff;
-  --police:'Fredoka', sans-serif;
-  --arrondi:22px;  --ombre:0 7px 0 rgba(61,59,82,.15);
-}
-body{background:var(--fond);color:var(--encre);font-family:var(--police);
-     font-weight:500}
-/* REGLES : aucun contour noir, tout est arrondi, l ombre est nette et
-   toujours vers le bas jamais floue, couleurs pastel uniquement */
-```
-
----
-
-## 4 · Craie sur tableau
-
-**Pour Tim :** comme si tout était dessiné à la craie sur le tableau de l'école.
-**Va bien avec :** énigmes, labyrinthes, mémoire, jeux calmes, jeux à l'ancienne.
-
-```css
-/* STYLE : CRAIE SUR TABLEAU */
-@import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
-:root{
-  --fond:#2e3b32;  --encre:#f5f3ee;
-  --c1:#ffe08a;    --c2:#ffa8c5;    --c3:#9fd8ff;
-  --police:'Gloria Hallelujah', cursive;
-  --tremble:255px 15px 225px 15px / 15px 225px 15px 255px;
-}
-body{background:var(--fond);color:var(--encre);font-family:var(--police)}
-/* REGLES : rien n est rempli, tout est dessine au trait de craie,
-   bords irreguliers via --tremble, legere transparence poussiere de craie */
-```
-
----
-
-## 5 · Bonbon gelée
-
-**Pour Tim :** tout brille et rebondit, comme des bonbons.
-**Va bien avec :** rangement, casse-briques, rapidité, tout ce qui est mignon.
-
-```css
-/* STYLE : BONBON GELEE */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap');
-:root{
-  --fond:#fff0f7;  --encre:#5a2a58;
-  --c1:linear-gradient(150deg,#ff5fa2,#a06bff);
-  --c2:linear-gradient(160deg,#7be0ff,#4aa8ff);
-  --police:'Nunito', sans-serif;
-  --arrondi:46%;
-  --gloss:inset 0 -8px 14px rgba(0,0,0,.14), inset 0 7px 10px rgba(255,255,255,.75);
-}
-body{background:var(--fond);color:var(--encre);font-family:var(--police);
-     font-weight:900}
-/* REGLES : tout est en degrade et brillant, tout ce qui bouge s ecrase a
-   l arrivee (scaleY .86 puis 1.04), aucun angle droit */
-```
-
----
-
-## 6 · Monde en blocs
-
-**Pour Tim :** tout est en cubes, comme dans Minecraft.
-**Va bien avec :** construction, exploration, fermes, bases, survie.
-
-```css
-/* STYLE : MONDE EN BLOCS */
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-:root{
-  --ciel:linear-gradient(#79c2ff,#cfe9ff);
-  --herbe:#5b9c3f;  --terre:#7c4f2c;  --pierre:#8a8a8a;
-  --encre:#2b2b2b;
-  --police:'VT323', monospace;
-  --arrondi:0px;
-}
-body{background:var(--ciel);color:var(--encre);font-family:var(--police);
-     font-size:22px;image-rendering:pixelated}
-/* REGLES : tout est cubique jamais d arrondi, palette terre herbe pierre,
-   nuages blancs rectangulaires dans le ciel */
-```
-
-
----
-
-## 7 · Console 16 bits
-/* STYLE : CONSOLE 16 BITS */
-:root{
-  /* Palette : 3 tons par couleur — clair, base, ombre. C'est LA
-     signature du 16 bits face au 8 bits, qui n'en avait qu'un ou deux. */
-  --ciel-clair:#9bd4ff; --ciel:#5aa9e6; --ciel-ombre:#3d7ebf;
-  --herbe-clair:#8fd94a; --herbe:#5aa832; --herbe-ombre:#2f6b1e;
-  --terre-clair:#c08b4f; --terre:#8b5a2b; --terre-ombre:#5c3a1a;
-  --peau-clair:#ffd9a0; --peau:#e8a76a; --peau-ombre:#a86b3c;
-  --rouge-clair:#ff8a7a; --rouge:#e04f3d; --rouge-ombre:#8f2618;
-  --contour:#2b1b2e;   /* jamais du noir pur : violet très sombre */
-  --police:monospace;
-}
-canvas{image-rendering:pixelated; image-rendering:crisp-edges}
-body{background:var(--ciel-ombre); margin:0; display:grid; place-items:center}
-
-REGLES DE RENDU 16 BITS — à respecter dans le code du jeu
-
-RESOLUTION
-- Le jeu se dessine sur un canvas de 320 x 224 pixels virtuels, jamais plus.
-- Ce canvas est agrandi par un facteur ENTIER (x2, x3, x4) via CSS. Jamais
-  un agrandissement non entier : ça floute les pixels.
-- ctx.imageSmoothingEnabled = false, obligatoire.
-
-DESSIN
-- Tout est dessiné avec fillRect sur la grille de pixels virtuelle.
-- Aucune forme arrondie, aucun cercle lissé, aucun dégradé CSS.
-- Un dégradé se simule par tramage (dithering) : alternance de deux
-  couleurs en damier. C'est ce que faisaient les vraies consoles.
-
-OMBRAGE — le point le plus important
-- Chaque élément utilise 3 tons de sa couleur : clair en haut, base au
-  milieu, ombre en bas. La lumière vient toujours d'en haut à gauche.
-- Un aplat d'une seule couleur fait 8 bits, pas 16 bits.
-
-CONTOURS
-- Chaque personnage a un contour d'un pixel, en --contour.
-- Jamais du noir pur : un violet ou brun très sombre, plus vivant.
-
-DECOR
-- Le fond défile sur 2 ou 3 couches à des vitesses différentes (parallaxe) :
-  le lointain lent, le proche rapide. C'est ce qui donne la profondeur.
-- Les éléments de décor se répètent par tuiles de 16 x 16 pixels.
+TEXTURE
+- Une trame de petits points (halftone) très discrète dans les zones
+  d'ombre du décor, faite avec repeating-radial-gradient, opacité 0.06.
+- Uniquement sur le décor, jamais sur les personnages.
 
 ANIMATION
-- 2 à 4 images par animation, pas plus. Changement toutes les 8 à 12 images
-  par seconde, jamais en continu.
-- Les personnages ont une légère oscillation verticale au repos (1 pixel).
+- 6 à 8 images par animation, plus fluide que du pixel art.
+- Les mouvements s'étirent et s'écrasent légèrement (squash and stretch).
 
 TEXTE
-- Le texte est dessiné sur le canvas, aligné sur la grille de pixels.
-- Pas de police web : les vraies consoles avaient des polices dessinées.
-  Une police monospace agrandie sans lissage fait l'affaire au départ.
+- Gros, en gras, avec un contour --encre épais et une ombre portée décalée.
