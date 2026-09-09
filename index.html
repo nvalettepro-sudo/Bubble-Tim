@@ -325,6 +325,7 @@ function basculePlein(){
 function majPlein(){
   var on=!!(document.fullscreenElement||document.webkitFullscreenElement);
   if(on) document.body.classList.add('plein'); else document.body.classList.remove('plein');
+  if(modeSouris) attrapeFleche();
 }
 document.addEventListener('fullscreenchange',majPlein);
 document.addEventListener('webkitfullscreenchange',majPlein);
@@ -381,25 +382,64 @@ var sDX=0, sDY=0, sQuand=0, sAvant=null;
 var sPrec={gauche:false,droite:false,haut:false,bas:false};
 var elBtSouris=document.getElementById('btsouris');
 
+/* la fleche est capturee par le jeu : elle ne peut plus atteindre le bord de
+   l'ecran, donc le heros ne s'arrete plus tout seul. */
+function attrapeFleche(){
+  try{
+    if(document.pointerLockElement===cv) return;
+    if(!cv.requestPointerLock) return;
+    var p=cv.requestPointerLock();
+    if(p && p.catch) p.catch(function(){});
+  }catch(err){}
+}
+function lacheFleche(){
+  try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(err){}
+}
+
 function basculeSouris(){
   modeSouris=!modeSouris;
   elBtSouris.textContent='SOURIS : '+(modeSouris?'OUI':'NON');
   if(modeSouris) elBtSouris.classList.add('on'); else elBtSouris.classList.remove('on');
   message(modeSouris?'MODE SOURIS':'MODE NORMAL');
-  if(!modeSouris){
+  if(modeSouris){
+    attrapeFleche();
+  }else{
+    lacheFleche();
     for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
   }
 }
 elBtSouris.addEventListener('click',function(){ reveilleSon(); basculeSouris(); });
 
+/* si la capture est perdue (touche Echap, passage en plein ecran), on la reprend
+   au clic suivant dans le jeu */
+document.addEventListener('pointerlockchange',function(){
+  if(modeSouris && document.pointerLockElement!==cv){
+    for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
+  }
+});
+
+function litBouge(e){
+  var mx=0, my=0;
+  if(document.pointerLockElement===cv){
+    /* fleche capturee : le navigateur donne le deplacement, sans limite d'ecran */
+    mx=+e.movementX||0; my=+e.movementY||0;
+  }else{
+    if(sAvant){ mx=e.clientX-sAvant.x; my=e.clientY-sAvant.y; }
+    sAvant={x:e.clientX,y:e.clientY};
+  }
+  if(mx===0 && my===0) return;
+  sDX=mx; sDY=my; sQuand=Date.now();
+}
+window.addEventListener('mousemove',litBouge);
 window.addEventListener('pointermove',function(e){
-  if(sAvant){ sDX=e.clientX-sAvant.x; sDY=e.clientY-sAvant.y; }
-  sAvant={x:e.clientX,y:e.clientY};
-  sQuand=Date.now();
+  if(e.pointerType && e.pointerType!=='mouse') return;
+  if(document.pointerLockElement===cv) return;
+  litBouge(e);
 });
 cv.addEventListener('pointerdown',function(e){
   reveilleSon();
   if(!modeSouris) return;
+  attrapeFleche();
   if(etat==='intro'||etat==='gagne'||etat==='perdu') return;
   attaqueDemandee=true;
 });
