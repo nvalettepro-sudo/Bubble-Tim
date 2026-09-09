@@ -100,7 +100,7 @@ body.plein #pad,body.plein #aide{display:none}
     <div id="voile">
       <h1>BUBBLE TIM</h1>
       <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick, A pour taper</p>
-      <p class="gros">Appuie sur une touche</p>
+      <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
     </div>
   </div>
 
@@ -262,7 +262,7 @@ document.addEventListener('keydown',function(e){
   if(e.key && e.key.toLowerCase()==='f'){ e.preventDefault(); basculePlein(); return; }
   var n=nomTouche(e.key);
   if(n) e.preventDefault();
-  if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; return; }
+  if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return; }
   if(n==='rejouer'){ init(); voile.classList.add('cache'); etat='jeu'; return; }
   if(n==='taper'){ if(!e.repeat) attaqueDemandee=true; return; }
   if(n) touches[n]=true;
@@ -272,7 +272,7 @@ document.addEventListener('keyup',function(e){
 });
 function brancheTouche(el,nom){
   function on(e){ e.preventDefault(); reveilleSon();
-    if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; }
+    if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; }
     if(nom==='taper') attaqueDemandee=true; else touches[nom]=true; }
   function off(e){ e.preventDefault(); if(nom!=='taper') touches[nom]=false; }
   el.addEventListener('pointerdown',on);
@@ -289,17 +289,29 @@ document.getElementById('btrejouer').addEventListener('click',function(){
 });
 voile.addEventListener('pointerdown',function(){
   reveilleSon();
-  if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; }
+  if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; }
   else if(etat==='gagne'||etat==='perdu'){ init(); voile.classList.add('cache'); etat='jeu'; }
 });
 
 /* ================= PLEIN ECRAN ================= */
+function estPlein(){
+  return !!(document.fullscreenElement||document.webkitFullscreenElement);
+}
+function demandePlein(){
+  var e=document.documentElement;
+  try{
+    if(estPlein()) return;
+    var p=null;
+    if(e.requestFullscreen) p=e.requestFullscreen();
+    else if(e.webkitRequestFullscreen) p=e.webkitRequestFullscreen();
+    if(p && p.catch) p.catch(function(){});
+  }catch(err){}
+}
 function basculePlein(){
   var d=document, e=d.documentElement;
   try{
-    if(!d.fullscreenElement && !d.webkitFullscreenElement){
-      if(e.requestFullscreen) e.requestFullscreen();
-      else if(e.webkitRequestFullscreen) e.webkitRequestFullscreen();
+    if(!estPlein()){
+      demandePlein();
     }else{
       if(d.exitFullscreen) d.exitFullscreen();
       else if(d.webkitExitFullscreen) d.webkitExitFullscreen();
