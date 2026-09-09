@@ -40,7 +40,7 @@ body{background:var(--ombre-profonde);color:var(--encre);
           box-shadow:0 3px 0 rgba(42,31,45,.35)}
 .compteur b{color:var(--ambre-sombre);margin-left:6px}
 
-#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 300px) * 1.7778));
+#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 310px) * 1.7778));
          border:5px solid var(--encre);border-radius:16px;
          overflow:hidden;line-height:0;background:var(--ombre-profonde);
          box-shadow:0 8px 0 rgba(42,31,45,.4)}
@@ -65,8 +65,22 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 .tou:active{background:var(--lumiere);transform:translateY(3px);box-shadow:0 1px 0 rgba(42,31,45,.45)}
 #btaper{width:126px;height:98px;font-size:20px;background:var(--ambre);color:var(--encre)}
 #btrejouer{height:48px;padding:0 14px;font-size:15px}
+#btplein{height:48px;padding:0 10px;font-size:13px}
 .vide{visibility:hidden;border:none;background:none;box-shadow:none}
 #aide{font-size:13px;line-height:1.35;color:var(--creme);text-align:center;font-weight:700}
+
+/* ---- PLEIN ECRAN ---- */
+body.plein{padding:0;gap:0;background:#000}
+body.plein #boite{position:relative;max-width:none;width:100vw;height:100vh;gap:0;
+                  justify-content:center}
+body.plein #zonejeu{border:none;border-radius:0;box-shadow:none;
+                    width:min(100vw,177.7vh);max-width:none}
+body.plein #hud{position:absolute;top:12px;left:0;right:0;z-index:5}
+body.plein #pad,body.plein #aide{display:none}
+@media (pointer:coarse){
+  body.plein #pad{display:flex;position:absolute;bottom:12px;left:50%;
+                  transform:translateX(-50%);opacity:.8;z-index:5}
+}
 </style>
 </head>
 <body>
@@ -82,10 +96,10 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
   </div>
 
   <div id="zonejeu">
-    <canvas id="cv" width="960" height="540"></canvas>
+    <canvas id="cv" width="1920" height="1080"></canvas>
     <div id="voile">
       <h1>BUBBLE TIM</h1>
-      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer</p>
+      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick, A pour taper</p>
       <p class="gros">Appuie sur une touche</p>
     </div>
   </div>
@@ -104,11 +118,14 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
       <button class="tou" id="btaper">TAPER</button>
-      <button class="tou" id="btrejouer">REJOUER (R)</button>
+      <div style="display:flex;gap:8px">
+        <button class="tou" id="btrejouer">REJOUER (R)</button>
+        <button class="tou" id="btplein">PLEIN ECRAN (F)</button>
+      </div>
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance</div>
+  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick ou croix pour bouger, A pour taper, START pour rejouer</div>
 </div>
 
 <script>
@@ -118,6 +135,7 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 /* ================= BASES ================= */
 var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 ctx.imageSmoothingEnabled=true;
+var ECH=2;
 var W=960,H=540, SOL_HAUT=352, SOL_BAS=506, MONDE=4100;
 var elVie=document.querySelector('#vie i'), elNrj=document.querySelector('#nrj i');
 var elMuni=document.getElementById('muni'), elScore=document.getElementById('score');
@@ -241,6 +259,7 @@ function nomTouche(k){
 }
 document.addEventListener('keydown',function(e){
   reveilleSon();
+  if(e.key && e.key.toLowerCase()==='f'){ e.preventDefault(); basculePlein(); return; }
   var n=nomTouche(e.key);
   if(n) e.preventDefault();
   if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; return; }
@@ -273,6 +292,77 @@ voile.addEventListener('pointerdown',function(){
   if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; }
   else if(etat==='gagne'||etat==='perdu'){ init(); voile.classList.add('cache'); etat='jeu'; }
 });
+
+/* ================= PLEIN ECRAN ================= */
+function basculePlein(){
+  var d=document, e=d.documentElement;
+  try{
+    if(!d.fullscreenElement && !d.webkitFullscreenElement){
+      if(e.requestFullscreen) e.requestFullscreen();
+      else if(e.webkitRequestFullscreen) e.webkitRequestFullscreen();
+    }else{
+      if(d.exitFullscreen) d.exitFullscreen();
+      else if(d.webkitExitFullscreen) d.webkitExitFullscreen();
+    }
+  }catch(err){}
+}
+function majPlein(){
+  var on=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  if(on) document.body.classList.add('plein'); else document.body.classList.remove('plein');
+}
+document.addEventListener('fullscreenchange',majPlein);
+document.addEventListener('webkitfullscreenchange',majPlein);
+document.getElementById('btplein').addEventListener('click',function(){
+  reveilleSon(); basculePlein();
+});
+
+/* ================= MANETTE ================= */
+var mDir={gauche:false,droite:false,haut:false,bas:false};
+var mPrec={gauche:false,droite:false,haut:false,bas:false};
+var mTaper=false, mStart=false;
+
+function bAppuye(g,i){ var b=g.buttons[i]; return !!(b && (b.pressed||b.value>0.5)); }
+
+function demarreOuRejoue(){
+  if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; return true; }
+  if(etat==='gagne'||etat==='perdu'){ init(); voile.classList.add('cache'); etat='jeu'; return true; }
+  return false;
+}
+
+function litManette(){
+  var g=null;
+  try{
+    var gps=navigator.getGamepads?navigator.getGamepads():null;
+    if(gps) for(var i=0;i<gps.length;i++) if(gps[i]&&gps[i].connected){ g=gps[i]; break; }
+  }catch(err){ g=null; }
+
+  var d={gauche:false,droite:false,haut:false,bas:false}, tap=false, st=false;
+  if(g){
+    var ax=g.axes[0]||0, ay=g.axes[1]||0, S=0.4;
+    d.gauche = ax<-S || bAppuye(g,14);
+    d.droite = ax> S || bAppuye(g,15);
+    d.haut   = ay<-S || bAppuye(g,12);
+    d.bas    = ay> S || bAppuye(g,13);
+    tap = bAppuye(g,0)||bAppuye(g,2)||bAppuye(g,7)||bAppuye(g,5);
+    st  = bAppuye(g,9);
+  }
+
+  for(var k in d){
+    if(d[k]!==mPrec[k]){ touches[k]=d[k]; mPrec[k]=d[k]; }
+  }
+
+  if(tap && !mTaper){
+    reveilleSon();
+    if(!demarreOuRejoue()) attaqueDemandee=true;
+  }
+  mTaper=tap;
+
+  if(st && !mStart){
+    reveilleSon();
+    if(!demarreOuRejoue()){ init(); voile.classList.add('cache'); etat='jeu'; }
+  }
+  mStart=st;
+}
 
 /* ================= HUD ================= */
 function majHud(){
@@ -1157,7 +1247,7 @@ function dessineBoss(){
 
 /* ================= DESSIN ================= */
 function dessine(){
-  ctx.setTransform(1,0,0,1,0,0);
+  ctx.setTransform(ECH,0,0,ECH,0,0);
   ctx.globalAlpha=1;
   var sx=0, sy=0;
   if(secousse>0){ sx=Math.random()*8-4; sy=Math.random()*6-3; }
@@ -1338,6 +1428,7 @@ function boucle(t){
   precedent=t;
   if(!isFinite(dt)||dt<=0) dt=1;
   if(dt>2.5) dt=2.5;
+  try{ litManette(); }catch(err){}
   try{ maj(dt); dessine(); }catch(err){ console.error(err); }
   requestAnimationFrame(boucle);
 }
