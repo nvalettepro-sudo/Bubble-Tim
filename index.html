@@ -93,13 +93,14 @@ body.plein #pad,body.plein #aide{display:none}
     <div class="compteur">BULLES <b id="muni">15</b></div>
     <div class="compteur">SCORE <b id="score">0</b></div>
     <div class="compteur" id="msg">STAGE 1</div>
+    <div class="compteur" id="cman" style="display:none">MANETTE</div>
   </div>
 
   <div id="zonejeu">
     <canvas id="cv" width="1920" height="1080"></canvas>
     <div id="voile">
       <h1>BUBBLE TIM</h1>
-      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick, A pour taper</p>
+      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick gauche, A pour taper</p>
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
     </div>
   </div>
@@ -125,7 +126,7 @@ body.plein #pad,body.plein #aide{display:none}
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick ou croix pour bouger, A pour taper, START pour rejouer</div>
+  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper (elle vibre !)</div>
 </div>
 
 <script>
@@ -329,34 +330,76 @@ document.getElementById('btplein').addEventListener('click',function(){
 });
 
 /* ================= MANETTE ================= */
-var mDir={gauche:false,droite:false,haut:false,bas:false};
 var mPrec={gauche:false,droite:false,haut:false,bas:false};
-var mTaper=false, mStart=false;
+var mTaper=false, mBranchee=false;
+var elMan=document.getElementById('cman');
 
-function bAppuye(g,i){ var b=g.buttons[i]; return !!(b && (b.pressed||b.value>0.5)); }
+window.addEventListener('gamepadconnected',function(){ reveilleSon(); });
+
+function manetteActive(){
+  var gps=null;
+  try{ gps=navigator.getGamepads?navigator.getGamepads():null; }catch(err){ return null; }
+  if(!gps) return null;
+  for(var i=0;i<gps.length;i++){
+    var g=gps[i];
+    if(g && g.connected && g.axes && g.buttons) return g;
+  }
+  return null;
+}
+
+/* vibration : force de 0 a 1, duree en millisecondes */
+function vibre(force,ms){
+  var g=manetteActive();
+  if(!g) return;
+  try{
+    if(g.vibrationActuator && g.vibrationActuator.playEffect){
+      var p=g.vibrationActuator.playEffect('dual-rumble',
+        {startDelay:0,duration:ms,weakMagnitude:force,strongMagnitude:force});
+      if(p && p.catch) p.catch(function(){});
+    }else if(g.hapticActuators && g.hapticActuators[0] && g.hapticActuators[0].pulse){
+      var q=g.hapticActuators[0].pulse(force,ms);
+      if(q && q.catch) q.catch(function(){});
+    }
+  }catch(err){}
+}
 
 function demarreOuRejoue(){
-  if(etat==='intro'){ voile.classList.add('cache'); etat='jeu'; return true; }
+  if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return true; }
   if(etat==='gagne'||etat==='perdu'){ init(); voile.classList.add('cache'); etat='jeu'; return true; }
   return false;
 }
 
 function litManette(){
-  var g=null;
-  try{
-    var gps=navigator.getGamepads?navigator.getGamepads():null;
-    if(gps) for(var i=0;i<gps.length;i++) if(gps[i]&&gps[i].connected){ g=gps[i]; break; }
-  }catch(err){ g=null; }
+  var g=manetteActive();
 
-  var d={gauche:false,droite:false,haut:false,bas:false}, tap=false, st=false;
+  /* petit voyant MANETTE dans le bandeau */
+  if(!!g!==mBranchee){
+    mBranchee=!!g;
+    elMan.style.display = mBranchee ? 'flex' : 'none';
+    if(mBranchee) message('MANETTE OK');
+  }
+
+  var d={gauche:false,droite:false,haut:false,bas:false}, tap=false;
+
   if(g){
-    var ax=g.axes[0]||0, ay=g.axes[1]||0, S=0.4;
-    d.gauche = ax<-S || bAppuye(g,14);
-    d.droite = ax> S || bAppuye(g,15);
-    d.haut   = ay<-S || bAppuye(g,12);
-    d.bas    = ay> S || bAppuye(g,13);
-    tap = bAppuye(g,0)||bAppuye(g,2)||bAppuye(g,7)||bAppuye(g,5);
-    st  = bAppuye(g,9);
+    /* stick gauche */
+    var ax=+g.axes[0]||0, ay=+g.axes[1]||0, S=0.3;
+    if(ax<-S) d.gauche=true;
+    if(ax> S) d.droite=true;
+    if(ay<-S) d.haut=true;
+    if(ay> S) d.bas=true;
+    /* croix directionnelle (si la manette en a une reconnue) */
+    var b=g.buttons;
+    if(b[14] && (b[14].pressed||b[14].value>0.5)) d.gauche=true;
+    if(b[15] && (b[15].pressed||b[15].value>0.5)) d.droite=true;
+    if(b[12] && (b[12].pressed||b[12].value>0.5)) d.haut=true;
+    if(b[13] && (b[13].pressed||b[13].value>0.5)) d.bas=true;
+    /* A pour taper - et n'importe quel autre bouton, pour que ca marche
+       meme si la manette n'est pas reconnue comme une manette standard */
+    for(var i=0;i<b.length;i++){
+      if(i>=12 && i<=15) continue;
+      if(b[i] && (b[i].pressed||b[i].value>0.5)){ tap=true; break; }
+    }
   }
 
   for(var k in d){
@@ -368,12 +411,6 @@ function litManette(){
     if(!demarreOuRejoue()) attaqueDemandee=true;
   }
   mTaper=tap;
-
-  if(st && !mStart){
-    reveilleSon();
-    if(!demarreOuRejoue()){ init(); voile.classList.add('cache'); etat='jeu'; }
-  }
-  mStart=st;
 }
 
 /* ================= HUD ================= */
@@ -405,6 +442,7 @@ function poussiere(x,y,col,n){
 /* ================= ACTIONS ================= */
 function attaque(){
   if(etat!=='jeu' || hero.cd>0) return;
+  vibre(0.35,90);
   if(hero.muni>0){
     hero.muni--; hero.cd=14; hero.frappe=6;
     bulles.push({x:hero.x+hero.dir*26, y:hero.y-40, vx:hero.dir*9.5, vie:130});
@@ -543,7 +581,7 @@ function maj(dt){
     var ti=tirs[t2];
     ti.x+=ti.vx*dt; ti.y+=(ti.vy||0)*dt; ti.vie-=dt; ti.rot=(ti.rot||0)+0.2*dt;
     if(hero.inv<=0 && Math.abs(ti.x-hero.x)<26 && Math.abs(ti.y-(hero.y-40))<30){
-      hero.vie-=ti.deg; hero.inv=45; hero.pousse=(ti.vx>0?1:-1)*3.5; secousse=7;
+      hero.vie-=ti.deg; vibre(0.8,220); hero.inv=45; hero.pousse=(ti.vx>0?1:-1)*3.5; secousse=7;
       poussiere(hero.x,hero.y,C.blanc,6);
       son(120,0.14,'sawtooth',0.06); majHud();
       tirs.splice(t2,1); continue;
@@ -583,7 +621,7 @@ function maj(dt){
       }else if(e.cd<=0){
         e.cd=t.cd; e.frappe=12;
         if(hero.inv<=0){
-          hero.vie-=t.deg; hero.inv=45; hero.pousse=(dx>0?1:-1)*4.5; secousse=8;
+          hero.vie-=t.deg; vibre(0.8,220); hero.inv=45; hero.pousse=(dx>0?1:-1)*4.5; secousse=8;
           poussiere(hero.x,hero.y,C.blanc,5);
           son(120,0.16,'sawtooth',0.06); majHud();
         }
@@ -610,7 +648,7 @@ function maj(dt){
       boss.x+=(boss.dirCharge)*4.2*dt;
       boss.pas+=0.5*dt;
       if(Math.abs(bdx)<70 && Math.abs(bdy)<38 && hero.inv<=0){
-        hero.vie-=13; hero.inv=50; hero.pousse=(bdx>0?1:-1)*7; secousse=12;
+        hero.vie-=13; vibre(1,320); hero.inv=50; hero.pousse=(bdx>0?1:-1)*7; secousse=12;
         son(100,0.2,'sawtooth',0.07); majHud();
       }
     }else{
@@ -620,7 +658,7 @@ function maj(dt){
       if(boss.cd<=0 && Math.abs(bdx)<80 && Math.abs(bdy)<36){
         boss.cd=80;
         if(hero.inv<=0){
-          hero.vie-=12; hero.inv=48; hero.pousse=(bdx>0?1:-1)*6; secousse=10;
+          hero.vie-=12; vibre(1,300); hero.inv=48; hero.pousse=(bdx>0?1:-1)*6; secousse=10;
           son(110,0.18,'sawtooth',0.06); majHud();
         }
       }
