@@ -28,10 +28,10 @@ body{background:var(--ombre-profonde);color:var(--encre);
 #hud{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;
      font-size:15px;letter-spacing:.02em}
 .jauge{border:4px solid var(--encre);background:var(--ombre-froide);
-       width:170px;height:26px;position:relative;border-radius:13px;overflow:hidden;
+       width:190px;height:30px;position:relative;border-radius:15px;overflow:hidden;
        box-shadow:0 3px 0 rgba(42,31,45,.35)}
-.jauge i{display:block;height:100%;width:100%;border-radius:13px 0 0 13px}
-.jauge span{position:absolute;left:11px;top:3px;font-size:13px;color:var(--creme);
+.jauge i{display:block;height:100%;width:100%;border-radius:15px 0 0 15px}
+.jauge span{position:absolute;left:12px;top:5px;font-size:13px;color:var(--creme);
             text-shadow:0 1px 2px rgba(42,31,45,.9)}
 #vie i{background:linear-gradient(180deg,#ff7a63,var(--rouge))}
 #nrj i{background:linear-gradient(180deg,#6fa3dc,var(--bleu))}
@@ -40,7 +40,8 @@ body{background:var(--ombre-profonde);color:var(--encre);
           box-shadow:0 3px 0 rgba(42,31,45,.35)}
 .compteur b{color:var(--ambre-sombre);margin-left:6px}
 
-#zonejeu{position:relative;width:100%;border:5px solid var(--encre);border-radius:16px;
+#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 300px) * 1.7778));
+         border:5px solid var(--encre);border-radius:16px;
          overflow:hidden;line-height:0;background:var(--ombre-profonde);
          box-shadow:0 8px 0 rgba(42,31,45,.4)}
 canvas{display:block;width:100%;height:auto;image-rendering:auto}
@@ -74,7 +75,7 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 
   <div id="hud">
     <div class="jauge" id="vie"><i></i><span>VIE</span></div>
-    <div class="jauge" id="nrj"><i></i><span>ENERGIE</span></div>
+    <div class="jauge" id="nrj"><i></i><span>ENDURANCE</span></div>
     <div class="compteur">BULLES <b id="muni">15</b></div>
     <div class="compteur">SCORE <b id="score">0</b></div>
     <div class="compteur" id="msg">STAGE 1</div>
@@ -107,7 +108,7 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'energie</div>
+  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance</div>
 </div>
 
 <script>
