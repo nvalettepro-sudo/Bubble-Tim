@@ -374,7 +374,10 @@ function demarreOuRejoue(){
 
 /* ---- MODE SOURIS : quand la manette bouge la fleche au lieu du personnage,
    le heros marche vers la fleche et un clic tape. ---- */
-var modeSouris=false, souris={x:0,y:0,vu:false};
+var modeSouris=false;
+/* on suit le DEPLACEMENT de la fleche, pas sa position : si la fleche ne bouge
+   pas, le heros ne bouge pas non plus. */
+var sDX=0, sDY=0, sQuand=0, sAvant=null;
 var sPrec={gauche:false,droite:false,haut:false,bas:false};
 var elBtSouris=document.getElementById('btsouris');
 
@@ -389,12 +392,10 @@ function basculeSouris(){
 }
 elBtSouris.addEventListener('click',function(){ reveilleSon(); basculeSouris(); });
 
-cv.addEventListener('pointermove',function(e){
-  var r=cv.getBoundingClientRect();
-  if(!r.width||!r.height) return;
-  souris.x=(e.clientX-r.left)/r.width*W;
-  souris.y=(e.clientY-r.top)/r.height*H;
-  souris.vu=true;
+window.addEventListener('pointermove',function(e){
+  if(sAvant){ sDX=e.clientX-sAvant.x; sDY=e.clientY-sAvant.y; }
+  sAvant={x:e.clientX,y:e.clientY};
+  sQuand=Date.now();
 });
 cv.addEventListener('pointerdown',function(e){
   reveilleSon();
@@ -405,12 +406,10 @@ cv.addEventListener('pointerdown',function(e){
 
 function litSouris(){
   var d={gauche:false,droite:false,haut:false,bas:false};
-  if(modeSouris && souris.vu && etat==='jeu'){
-    var hx=hero.x-cam, hy=hero.y;
-    if(souris.x<hx-16) d.gauche=true;
-    if(souris.x>hx+16) d.droite=true;
-    if(souris.y<hy-14) d.haut=true;
-    if(souris.y>hy+14) d.bas=true;
+  if(modeSouris && etat==='jeu' && Date.now()-sQuand<150){
+    var S=2;
+    if(sDX<-S) d.gauche=true; else if(sDX>S) d.droite=true;
+    if(sDY<-S) d.haut=true;   else if(sDY>S) d.bas=true;
   }
   for(var k in d){
     if(d[k]!==sPrec[k]){ touches[k]=d[k]; sPrec[k]=d[k]; }
