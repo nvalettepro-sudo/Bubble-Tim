@@ -40,7 +40,7 @@ body{background:var(--ombre-profonde);color:var(--encre);
           box-shadow:0 3px 0 rgba(42,31,45,.35)}
 .compteur b{color:var(--ambre-sombre);margin-left:6px}
 
-#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 310px) * 1.7778));
+#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 330px) * 1.7778));
          border:5px solid var(--encre);border-radius:16px;
          overflow:hidden;line-height:0;background:var(--ombre-profonde);
          box-shadow:0 8px 0 rgba(42,31,45,.4)}
@@ -100,7 +100,7 @@ body.plein #pad,body.plein #aide{display:none}
     <canvas id="cv" width="1920" height="1080"></canvas>
     <div id="voile">
       <h1>BUBBLE TIM</h1>
-      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer &nbsp; F : plein ecran &nbsp; M : mode souris<br>Manette : stick gauche, A pour taper</p>
+      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer &nbsp; F : plein ecran &nbsp; M : mode souris (ECHAP pour sortir)<br>Manette : stick gauche, A pour taper</p>
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
       <p id="etatman">Manette : je cherche...</p>
     </div>
@@ -128,7 +128,7 @@ body.plein #pad,body.plein #aide{display:none}
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper - si elle bouge la fleche de la souris, appuie sur M</div>
+  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper - si elle bouge la fleche, appuie sur M<br>Pour revenir au clavier : ECHAP, ou START sur la manette, ou M</div>
 </div>
 
 <script>
@@ -264,6 +264,7 @@ document.addEventListener('keydown',function(e){
   reveilleSon();
   if(e.key && e.key.toLowerCase()==='f'){ e.preventDefault(); basculePlein(); return; }
   if(e.key && e.key.toLowerCase()==='m'){ e.preventDefault(); basculeSouris(); return; }
+  if(e.key==='Escape'){ eteintSouris(); return; }
   var n=nomTouche(e.key);
   if(n) e.preventDefault();
   if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return; }
@@ -325,7 +326,6 @@ function basculePlein(){
 function majPlein(){
   var on=!!(document.fullscreenElement||document.webkitFullscreenElement);
   if(on) document.body.classList.add('plein'); else document.body.classList.remove('plein');
-  if(modeSouris) attrapeFleche();
 }
 document.addEventListener('fullscreenchange',majPlein);
 document.addEventListener('webkitfullscreenchange',majPlein);
@@ -335,7 +335,7 @@ document.getElementById('btplein').addEventListener('click',function(){
 
 /* ================= MANETTE ================= */
 var mPrec={gauche:false,droite:false,haut:false,bas:false};
-var mTaper=false, mBranchee=null, mCentre={x:0,y:0};
+var mTaper=false, mStart=false, mBranchee=null, mCentre={x:0,y:0};
 var elMan=document.getElementById('cman');
 
 window.addEventListener('gamepadconnected',function(){ reveilleSon(); });
@@ -396,26 +396,34 @@ function lacheFleche(){
   try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(err){}
 }
 
-function basculeSouris(){
-  modeSouris=!modeSouris;
+function afficheSouris(){
   elBtSouris.textContent='SOURIS : '+(modeSouris?'OUI':'NON');
   if(modeSouris) elBtSouris.classList.add('on'); else elBtSouris.classList.remove('on');
-  message(modeSouris?'MODE SOURIS':'MODE NORMAL');
-  if(modeSouris){
-    attrapeFleche();
-  }else{
-    lacheFleche();
-    for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
-  }
 }
+/* retour au clavier : Echap, START sur la manette, la touche M ou le bouton */
+function eteintSouris(){
+  if(!modeSouris) return;
+  modeSouris=false;
+  afficheSouris();
+  message('RETOUR AU CLAVIER');
+  lacheFleche();
+  for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
+}
+function allumeSouris(){
+  if(modeSouris) return;
+  modeSouris=true;
+  afficheSouris();
+  message('SOURIS - ECHAP POUR SORTIR');
+  attrapeFleche();
+}
+function basculeSouris(){ if(modeSouris) eteintSouris(); else allumeSouris(); }
 elBtSouris.addEventListener('click',function(){ reveilleSon(); basculeSouris(); });
 
 /* si la capture est perdue (touche Echap, passage en plein ecran), on la reprend
    au clic suivant dans le jeu */
+/* Echap relache la fleche : on repasse alors au clavier tout seul */
 document.addEventListener('pointerlockchange',function(){
-  if(modeSouris && document.pointerLockElement!==cv){
-    for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
-  }
+  if(modeSouris && document.pointerLockElement!==cv) eteintSouris();
 });
 
 function litBouge(e){
@@ -497,8 +505,13 @@ function litManette(){
        meme si la manette n'est pas reconnue comme une manette standard */
     for(var i=0;i<b.length;i++){
       if(i>=12 && i<=15) continue;
+      if(i===9) continue;
       if(b[i] && (b[i].pressed||b[i].value>0.5)){ tap=true; break; }
     }
+    /* START : on quitte le mode souris */
+    if(b[9] && (b[9].pressed||b[9].value>0.5)){
+      if(!mStart){ mStart=true; eteintSouris(); }
+    }else mStart=false;
   }
 
   for(var k in d){
