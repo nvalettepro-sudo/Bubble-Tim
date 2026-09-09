@@ -48,7 +48,7 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 
 #voile{position:absolute;inset:0;background:rgba(45,51,85,.88);
        display:flex;flex-direction:column;align-items:center;justify-content:center;
-       gap:16px;text-align:center;padding:18px;color:var(--creme)}
+       gap:12px;text-align:center;padding:14px;color:var(--creme)}
 #voile.cache{display:none}
 #voile h1{font-size:min(8vw,48px);color:var(--lumiere);line-height:1.15;
           text-shadow:0 4px 0 var(--encre),0 0 22px rgba(255,179,71,.5)}
@@ -64,8 +64,8 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
      cursor:pointer;box-shadow:0 4px 0 rgba(42,31,45,.45)}
 .tou:active{background:var(--lumiere);transform:translateY(3px);box-shadow:0 1px 0 rgba(42,31,45,.45)}
 #btaper{width:126px;height:98px;font-size:20px;background:var(--ambre);color:var(--encre)}
-#btrejouer{height:48px;padding:0 14px;font-size:15px}
-#btplein{height:48px;padding:0 10px;font-size:13px}
+#btrejouer,#btplein,#btsouris{height:44px;padding:0 8px;font-size:12px}
+#btsouris.on{background:var(--lumiere-forte)}
 .vide{visibility:hidden;border:none;background:none;box-shadow:none}
 #aide{font-size:13px;line-height:1.35;color:var(--creme);text-align:center;font-weight:700}
 
@@ -100,7 +100,7 @@ body.plein #pad,body.plein #aide{display:none}
     <canvas id="cv" width="1920" height="1080"></canvas>
     <div id="voile">
       <h1>BUBBLE TIM</h1>
-      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick gauche, A pour taper</p>
+      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer &nbsp; F : plein ecran &nbsp; M : mode souris<br>Manette : stick gauche, A pour taper</p>
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
       <p id="etatman">Manette : je cherche...</p>
     </div>
@@ -120,14 +120,15 @@ body.plein #pad,body.plein #aide{display:none}
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
       <button class="tou" id="btaper">TAPER</button>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;justify-content:center">
         <button class="tou" id="btrejouer">REJOUER (R)</button>
         <button class="tou" id="btplein">PLEIN ECRAN (F)</button>
+        <button class="tou" id="btsouris">SOURIS : NON</button>
       </div>
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper (elle vibre !)</div>
+  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper - si elle bouge la fleche de la souris, appuie sur M</div>
 </div>
 
 <script>
@@ -262,6 +263,7 @@ function nomTouche(k){
 document.addEventListener('keydown',function(e){
   reveilleSon();
   if(e.key && e.key.toLowerCase()==='f'){ e.preventDefault(); basculePlein(); return; }
+  if(e.key && e.key.toLowerCase()==='m'){ e.preventDefault(); basculeSouris(); return; }
   var n=nomTouche(e.key);
   if(n) e.preventDefault();
   if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return; }
@@ -368,6 +370,51 @@ function demarreOuRejoue(){
   if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return true; }
   if(etat==='gagne'||etat==='perdu'){ init(); voile.classList.add('cache'); etat='jeu'; return true; }
   return false;
+}
+
+/* ---- MODE SOURIS : quand la manette bouge la fleche au lieu du personnage,
+   le heros marche vers la fleche et un clic tape. ---- */
+var modeSouris=false, souris={x:0,y:0,vu:false};
+var sPrec={gauche:false,droite:false,haut:false,bas:false};
+var elBtSouris=document.getElementById('btsouris');
+
+function basculeSouris(){
+  modeSouris=!modeSouris;
+  elBtSouris.textContent='SOURIS : '+(modeSouris?'OUI':'NON');
+  if(modeSouris) elBtSouris.classList.add('on'); else elBtSouris.classList.remove('on');
+  message(modeSouris?'MODE SOURIS':'MODE NORMAL');
+  if(!modeSouris){
+    for(var k in sPrec){ if(sPrec[k]){ touches[k]=false; sPrec[k]=false; } }
+  }
+}
+elBtSouris.addEventListener('click',function(){ reveilleSon(); basculeSouris(); });
+
+cv.addEventListener('pointermove',function(e){
+  var r=cv.getBoundingClientRect();
+  if(!r.width||!r.height) return;
+  souris.x=(e.clientX-r.left)/r.width*W;
+  souris.y=(e.clientY-r.top)/r.height*H;
+  souris.vu=true;
+});
+cv.addEventListener('pointerdown',function(e){
+  reveilleSon();
+  if(!modeSouris) return;
+  if(etat==='intro'||etat==='gagne'||etat==='perdu') return;
+  attaqueDemandee=true;
+});
+
+function litSouris(){
+  var d={gauche:false,droite:false,haut:false,bas:false};
+  if(modeSouris && souris.vu && etat==='jeu'){
+    var hx=hero.x-cam, hy=hero.y;
+    if(souris.x<hx-16) d.gauche=true;
+    if(souris.x>hx+16) d.droite=true;
+    if(souris.y<hy-14) d.haut=true;
+    if(souris.y>hy+14) d.bas=true;
+  }
+  for(var k in d){
+    if(d[k]!==sPrec[k]){ touches[k]=d[k]; sPrec[k]=d[k]; }
+  }
 }
 
 function litManette(){
@@ -1492,6 +1539,7 @@ function boucle(t){
   if(!isFinite(dt)||dt<=0) dt=1;
   if(dt>2.5) dt=2.5;
   try{ litManette(); }catch(err){}
+  try{ litSouris(); }catch(err){}
   try{ maj(dt); dessine(); }catch(err){ console.error(err); }
   requestAnimationFrame(boucle);
 }
