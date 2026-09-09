@@ -102,6 +102,7 @@ body.plein #pad,body.plein #aide{display:none}
       <h1>BUBBLE TIM</h1>
       <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer<br>F : plein ecran<br>Manette : stick gauche, A pour taper</p>
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
+      <p id="etatman">Manette : je cherche...</p>
     </div>
   </div>
 
@@ -331,7 +332,7 @@ document.getElementById('btplein').addEventListener('click',function(){
 
 /* ================= MANETTE ================= */
 var mPrec={gauche:false,droite:false,haut:false,bas:false};
-var mTaper=false, mBranchee=false;
+var mTaper=false, mBranchee=null, mCentre={x:0,y:0};
 var elMan=document.getElementById('cman');
 
 window.addEventListener('gamepadconnected',function(){ reveilleSon(); });
@@ -372,18 +373,30 @@ function demarreOuRejoue(){
 function litManette(){
   var g=manetteActive();
 
-  /* petit voyant MANETTE dans le bandeau */
+  /* petit voyant MANETTE dans le bandeau + ligne sur l'ecran d'accueil */
   if(!!g!==mBranchee){
     mBranchee=!!g;
     elMan.style.display = mBranchee ? 'flex' : 'none';
-    if(mBranchee) message('MANETTE OK');
+    if(mBranchee){
+      message('MANETTE OK');
+      /* on note la position du stick au repos, certaines manettes ne sont pas a zero */
+      var c0=+g.axes[0]||0, c1=+g.axes[1]||0;
+      mCentre.x = Math.abs(c0)<0.6 ? c0 : 0;
+      mCentre.y = Math.abs(c1)<0.6 ? c1 : 0;
+    }
+    var em=document.getElementById('etatman');
+    if(em){
+      em.textContent = mBranchee ? 'Manette : trouvee !'
+                                 : 'Manette : pas trouvee - appuie sur un bouton';
+      em.style.color = mBranchee ? '#a8e6a3' : '#ffb3a6';
+    }
   }
 
   var d={gauche:false,droite:false,haut:false,bas:false}, tap=false;
 
   if(g){
     /* stick gauche */
-    var ax=+g.axes[0]||0, ay=+g.axes[1]||0, S=0.3;
+    var ax=(+g.axes[0]||0)-mCentre.x, ay=(+g.axes[1]||0)-mCentre.y, S=0.3;
     if(ax<-S) d.gauche=true;
     if(ax> S) d.droite=true;
     if(ay<-S) d.haut=true;
