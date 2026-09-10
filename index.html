@@ -55,6 +55,9 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 #voile p{font-size:min(3.6vw,20px);line-height:1.6;color:var(--creme);font-weight:700}
 #voile .gros{font-size:min(4.6vw,26px);color:var(--lumiere-forte);
              text-shadow:0 3px 0 var(--encre)}
+#voile .diff{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#voile .diff .tou{height:50px;padding:0 14px;font-size:15px}
+#voile .diff .tou.on{background:var(--lumiere-forte)}
 
 #pad{display:flex;justify-content:space-between;align-items:center;gap:12px;
      width:100%;max-width:560px}
@@ -101,6 +104,12 @@ body.plein #pad,body.plein #aide{display:none}
     <div id="voile">
       <h1>BUBBLE TIM</h1>
       <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer &nbsp; F : plein ecran &nbsp; M : mode souris (ECHAP pour sortir)<br>Manette : stick gauche, A pour taper</p>
+      <p>Choisis ta difficulte :</p>
+      <div class="diff">
+        <button class="tou" data-diff="facile">1 - FACILE</button>
+        <button class="tou on" data-diff="normal">2 - NORMAL</button>
+        <button class="tou" data-diff="costaud">3 - COSTAUD</button>
+      </div>
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
       <p id="etatman">Manette : je cherche...</p>
     </div>
@@ -128,7 +137,7 @@ body.plein #pad,body.plein #aide{display:none}
     </div>
   </div>
 
-  <div id="aide">Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper - si elle bouge la fleche, appuie sur M<br>Pour revenir au clavier : ECHAP, ou START sur la manette, ou M</div>
+  <div id="aide">1, 2, 3 : facile, normal, costaud<br>Tue les ennemis pour avoir des bulles - ouvre les coffres pour l'endurance<br>Manette : stick gauche pour bouger, A pour taper - si elle bouge la fleche, appuie sur M<br>Pour revenir au clavier : ECHAP, ou START sur la manette, ou M</div>
 </div>
 
 <script>
@@ -189,6 +198,25 @@ var TYPES={
   rouge:  {col:C.rougeT, pv:6, vit:0.80, deg:11, cd:72,  pts:50, chute:1.00, mode:'melee', nom:'ROUGE'}
 };
 
+/* ================= DIFFICULTE ================= */
+/* un seul reglage a trois crans : les degats recus, la vitesse des ennemis
+   et le stock de bulles du depart. Les regles du jeu ne changent pas. */
+var NIVEAUX={
+  facile:  {nom:'FACILE',  degats:0.6, vitesse:0.85, muni:25},
+  normal:  {nom:'NORMAL',  degats:1,   vitesse:1,    muni:15},
+  costaud: {nom:'COSTAUD', degats:1.5, vitesse:1.15, muni:10}
+};
+var niveau='normal', DIFF=NIVEAUX.normal;
+function choisitNiveau(n){
+  if(!NIVEAUX[n]) return;
+  niveau=n; DIFF=NIVEAUX[n];
+  var bs=document.querySelectorAll('[data-diff]');
+  for(var i=0;i<bs.length;i++)
+    bs[i].className = 'tou' + (bs[i].getAttribute('data-diff')===n ? ' on' : '');
+  if(etat==='intro' && hero){ hero.muni=DIFF.muni; majHud(); }
+}
+function degatsRecus(d){ return Math.max(1,Math.round(d*DIFF.degats)); }
+
 function ajouteEnnemi(type,x,y,zone){
   ennemis.push({type:type,x:x,y:y,w:40,h:78,pv:TYPES[type].pv,pvmax:TYPES[type].pv,zone:zone,
                 actif:false,cd:40+Math.floor(rnd()*50),flash:0,pousse:0,pas:rnd()*6,frappe:0});
@@ -197,7 +225,7 @@ function ajouteEnnemi(type,x,y,zone){
 function init(){
   graine=987654;
   etat='intro'; cam=0; score=0; msgTimer=0; secousse=0; temps=0;
-  hero={x:120,y:450,w:44,h:78,dir:1,vie:100,nrj:100,muni:15,
+  hero={x:120,y:450,w:44,h:78,dir:1,vie:100,nrj:100,muni:DIFF.muni,
         inv:0,pousse:0,frappe:0,pas:0,cd:0};
   ennemis=[]; bulles=[]; tirs=[]; objets=[]; coffres=[]; portes=[]; particules=[]; boss=null;
 
@@ -265,6 +293,13 @@ document.addEventListener('keydown',function(e){
   if(e.key && e.key.toLowerCase()==='f'){ e.preventDefault(); basculePlein(); return; }
   if(e.key && e.key.toLowerCase()==='m'){ e.preventDefault(); basculeSouris(); return; }
   if(e.key==='Escape'){ eteintSouris(); return; }
+  if((etat==='intro'||etat==='gagne'||etat==='perdu') &&
+     (e.key==='1'||e.key==='2'||e.key==='3')){
+    e.preventDefault();
+    choisitNiveau(e.key==='1'?'facile':(e.key==='2'?'normal':'costaud'));
+    if(etat!=='intro') init();
+    demandePlein(); voile.classList.add('cache'); etat='jeu'; return;
+  }
   var n=nomTouche(e.key);
   if(n) e.preventDefault();
   if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; return; }
@@ -292,6 +327,16 @@ brancheTouche(document.getElementById('btaper'),'taper');
 document.getElementById('btrejouer').addEventListener('click',function(){
   reveilleSon(); init(); voile.classList.add('cache'); etat='jeu';
 });
+var btDiff=document.querySelectorAll('[data-diff]');
+for(var d2=0;d2<btDiff.length;d2++)(function(b){
+  b.addEventListener('pointerdown',function(e){
+    e.preventDefault(); e.stopPropagation(); reveilleSon();
+    choisitNiveau(b.getAttribute('data-diff'));
+    if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; }
+  });
+  b.addEventListener('contextmenu',function(e){e.preventDefault();});
+})(btDiff[d2]);
+
 voile.addEventListener('pointerdown',function(){
   reveilleSon();
   if(etat==='intro'){ demandePlein(); voile.classList.add('cache'); etat='jeu'; }
@@ -693,7 +738,7 @@ function maj(dt){
     var ti=tirs[t2];
     ti.x+=ti.vx*dt; ti.y+=(ti.vy||0)*dt; ti.vie-=dt; ti.rot=(ti.rot||0)+0.2*dt;
     if(hero.inv<=0 && Math.abs(ti.x-hero.x)<26 && Math.abs(ti.y-(hero.y-40))<30){
-      hero.vie-=ti.deg; vibre(0.8,220); hero.inv=45; hero.pousse=(ti.vx>0?1:-1)*3.5; secousse=7;
+      hero.vie-=degatsRecus(ti.deg); vibre(0.8,220); hero.inv=45; hero.pousse=(ti.vx>0?1:-1)*3.5; secousse=7;
       poussiere(hero.x,hero.y,C.blanc,6);
       son(120,0.14,'sawtooth',0.06); majHud();
       tirs.splice(t2,1); continue;
@@ -715,9 +760,9 @@ function maj(dt){
     if(t.mode==='tir'){
       /* garde ses distances et tire */
       var dist=Math.abs(dx);
-      if(dist<190) e.x-=(dx>0?1:-1)*t.vit*1.3*dt;
-      else if(dist>320) e.x+=(dx>0?1:-1)*t.vit*dt;
-      if(Math.abs(dy)>10) e.y+=(dy>0?1:-1)*t.vit*0.8*dt;
+      if(dist<190) e.x-=(dx>0?1:-1)*t.vit*DIFF.vitesse*1.3*dt;
+      else if(dist>320) e.x+=(dx>0?1:-1)*t.vit*DIFF.vitesse*dt;
+      if(Math.abs(dy)>10) e.y+=(dy>0?1:-1)*t.vit*DIFF.vitesse*0.8*dt;
       e.pas+=0.16*dt;
       if(e.cd<=0 && dist<430 && Math.abs(dy)<26){
         e.cd=t.cd; e.frappe=12;
@@ -727,13 +772,13 @@ function maj(dt){
     }else{
       var loin=Math.abs(dx)>34 || Math.abs(dy)>12;
       if(loin){
-        if(Math.abs(dx)>32) e.x+=(dx>0?1:-1)*t.vit*dt;
-        if(Math.abs(dy)>8)  e.y+=(dy>0?1:-1)*t.vit*0.65*dt;
+        if(Math.abs(dx)>32) e.x+=(dx>0?1:-1)*t.vit*DIFF.vitesse*dt;
+        if(Math.abs(dy)>8)  e.y+=(dy>0?1:-1)*t.vit*DIFF.vitesse*0.65*dt;
         e.pas+=0.2*dt;
       }else if(e.cd<=0){
         e.cd=t.cd; e.frappe=12;
         if(hero.inv<=0){
-          hero.vie-=t.deg; vibre(0.8,220); hero.inv=45; hero.pousse=(dx>0?1:-1)*4.5; secousse=8;
+          hero.vie-=degatsRecus(t.deg); vibre(0.8,220); hero.inv=45; hero.pousse=(dx>0?1:-1)*4.5; secousse=8;
           poussiere(hero.x,hero.y,C.blanc,5);
           son(120,0.16,'sawtooth',0.06); majHud();
         }
@@ -770,7 +815,7 @@ function maj(dt){
       if(boss.cd<=0 && Math.abs(bdx)<80 && Math.abs(bdy)<36){
         boss.cd=80;
         if(hero.inv<=0){
-          hero.vie-=12; vibre(1,300); hero.inv=48; hero.pousse=(bdx>0?1:-1)*6; secousse=10;
+          hero.vie-=degatsRecus(12); vibre(1,300); hero.inv=48; hero.pousse=(bdx>0?1:-1)*6; secousse=10;
           son(110,0.18,'sawtooth',0.06); majHud();
         }
       }
@@ -823,8 +868,8 @@ function maj(dt){
 function finEcran(gagne){
   voile.classList.remove('cache');
   voile.innerHTML = gagne
-    ? '<h1>BUBBLE TIM A GAGNE !</h1><p>Le chat rose est battu<br>Score : '+score+'</p><p class="gros">Appuie sur R</p>'
-    : '<h1 style="color:#ff7a6b">TIM EST TOMBE</h1><p>Score : '+score+'</p><p class="gros">Appuie sur R</p>';
+    ? '<h1>BUBBLE TIM A GAGNE !</h1><p>Le chat rose est battu<br>Score : '+score+'</p><p class="gros">Appuie sur R</p><p>1 FACILE &nbsp; 2 NORMAL &nbsp; 3 COSTAUD</p>'
+    : '<h1 style="color:#ff7a6b">TIM EST TOMBE</h1><p>Score : '+score+'</p><p class="gros">Appuie sur R</p><p>1 FACILE &nbsp; 2 NORMAL &nbsp; 3 COSTAUD</p>';
   son(gagne?880:110, 0.5, gagne?'triangle':'sawtooth', 0.07);
 }
 
