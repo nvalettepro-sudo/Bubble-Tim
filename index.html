@@ -23,7 +23,7 @@ body{background:var(--ombre-profonde);color:var(--encre);
      gap:10px;padding:10px;overflow:hidden;
      -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 
-#boite{width:100%;max-width:960px;display:flex;flex-direction:column;gap:10px;align-items:center}
+#boite{width:100%;max-width:1600px;display:flex;flex-direction:column;gap:10px;align-items:center}
 
 #hud{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;
      font-size:15px;letter-spacing:.02em}
@@ -40,30 +40,46 @@ body{background:var(--ombre-profonde);color:var(--encre);
           box-shadow:0 3px 0 rgba(42,31,45,.35)}
 .compteur b{color:var(--ambre-sombre);margin-left:6px}
 
-#zonejeu{position:relative;width:100%;max-width:max(280px,calc((100vh - 330px) * 1.7778));
+#zonejeu{position:relative;container-type:inline-size;
+         width:100%;max-width:max(280px,calc((100vh - 96px) * 1.7778));
          border:5px solid var(--encre);border-radius:16px;
          overflow:hidden;line-height:0;background:var(--ombre-profonde);
          box-shadow:0 8px 0 rgba(42,31,45,.4)}
 canvas{display:block;width:100%;height:auto;image-rendering:auto}
 
 #voile{position:absolute;inset:0;background:rgba(45,51,85,.88);
-       display:flex;flex-direction:column;align-items:center;justify-content:center;
-       gap:12px;text-align:center;padding:14px;color:var(--creme)}
+       display:flex;overflow:auto;text-align:center;padding:12px;color:var(--creme)}
+#voile .dedans{margin:auto;display:flex;flex-direction:column;align-items:center;
+               gap:10px;width:100%}
 #voile.cache{display:none}
-#voile h1{font-size:min(8vw,48px);color:var(--lumiere);line-height:1.15;
+#voile h1{font-size:min(8vw,48px);font-size:clamp(19px,5cqw,48px);
+          color:var(--lumiere);line-height:1.15;
           text-shadow:0 4px 0 var(--encre),0 0 22px rgba(255,179,71,.5)}
-#voile p{font-size:min(3.6vw,20px);line-height:1.6;color:var(--creme);font-weight:700}
-#voile .gros{font-size:min(4.6vw,26px);color:var(--lumiere-forte);
-             text-shadow:0 3px 0 var(--encre)}
+#voile p{font-size:min(3.6vw,20px);font-size:clamp(10px,1.85cqw,20px);
+         line-height:1.5;color:var(--creme);font-weight:700}
+#voile .gros{font-size:min(4.6vw,26px);font-size:clamp(12px,2.5cqw,26px);
+             color:var(--lumiere-forte);text-shadow:0 3px 0 var(--encre)}
 #voile .diff{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-#voile .diff .tou{height:50px;padding:0 14px;font-size:15px}
+#voile .diff .tou{height:50px;height:clamp(30px,4.6cqw,50px);
+                  padding:0 14px;font-size:clamp(10px,1.6cqw,15px)}
 #voile .diff .tou.on{background:var(--lumiere-forte)}
+#voile .infos{display:grid;grid-template-columns:1fr 1fr;gap:8px 30px;
+              max-width:min(720px,96%);text-align:left}
+#voile .infos div{font-size:min(2.6vw,15px);font-size:clamp(9px,1.55cqw,15px);
+                  line-height:1.4;color:var(--creme);font-weight:700}
+#voile .infos b{display:block;color:var(--lumiere-forte);
+                font-size:min(2.8vw,16px);font-size:clamp(9px,1.6cqw,16px);
+                letter-spacing:1px;margin-bottom:1px}
+@container (max-width:430px){
+  #voile .infos{grid-template-columns:1fr;gap:4px}
+  #voile .infos .clavier{display:none}  /* sur telephone il n'y a pas de clavier */
+}
 
 #version{position:absolute;left:8px;bottom:6px;z-index:6;pointer-events:none;
          font-family:var(--police);font-size:12px;font-weight:800;letter-spacing:1px;
          color:var(--creme);opacity:.35;text-shadow:0 2px 0 rgba(42,31,45,.55)}
 
-#pad{display:flex;justify-content:space-between;align-items:center;gap:12px;
+#pad{display:none;justify-content:space-between;align-items:center;gap:12px;
      width:100%;max-width:560px}
 .croix{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,50px);gap:6px}
 .tou{border:4px solid var(--encre);background:var(--creme);color:var(--encre);
@@ -74,7 +90,14 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 #btrejouer,#btplein,#btsouris{height:44px;padding:0 8px;font-size:12px}
 #btsouris.on{background:var(--lumiere-forte)}
 .vide{visibility:hidden;border:none;background:none;box-shadow:none}
-#aide{font-size:13px;line-height:1.35;color:var(--creme);text-align:center;font-weight:700}
+#aide{display:none}
+
+/* les boutons a l'ecran ne servent qu'au doigt : ils reviennent sur tablette et
+   telephone, et la zone de jeu leur laisse alors la place */
+@media (pointer:coarse){
+  #pad{display:flex}
+  #zonejeu{max-width:max(280px,calc((100vh - 300px) * 1.7778))}
+}
 
 /* ---- PLEIN ECRAN ---- */
 body.plein{padding:0;gap:0;background:#000}
@@ -106,18 +129,25 @@ body.plein #pad,body.plein #aide{display:none}
   <div id="zonejeu">
     <canvas id="cv" width="1920" height="1080"></canvas>
     <div id="voile">
+      <div class="dedans">
       <h1>BUBBLE TIM</h1>
-      <p>Fleches ou ZQSD : bouger<br>Espace : tirer une bulle<br>Plus de bulles = la masse<br>R : recommencer &nbsp; F : plein ecran &nbsp; M : mode souris (ECHAP pour sortir)<br>Manette : stick gauche, A pour taper</p>
+      <div class="infos">
+        <div><b>BOUGER</b>Fleches ou ZQSD<br>Manette : stick gauche ou croix</div>
+        <div><b>TAPER</b>Espace<br>Manette : A<br>Plus de bulles = la masse</div>
+        <div><b>LE BUT</b>Tape les ennemis pour avoir des bulles<br>Ouvre les coffres pour l'endurance<br>Bats le chat rose au bout de la rue</div>
+        <div class="clavier"><b>LES TOUCHES</b>R : recommencer &nbsp; F : plein ecran<br>M : mode souris, si la manette bouge la fleche<br>ECHAP ou START : retour au clavier</div>
+      </div>
       <p>Choisis ta difficulte :</p>
       <div class="diff">
         <button class="tou" data-diff="facile">1 - FACILE</button>
         <button class="tou on" data-diff="normal">2 - NORMAL</button>
         <button class="tou" data-diff="costaud">3 - COSTAUD</button>
       </div>
-      <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
+      <p class="gros">Appuie sur une touche pour jouer</p>
       <p id="etatman">Manette : je cherche...</p>
+      </div>
     </div>
-    <div id="version">v15</div>
+    <div id="version">v16</div>
   </div>
 
   <div id="pad">
@@ -872,9 +902,9 @@ function maj(dt){
 
 function finEcran(gagne){
   voile.classList.remove('cache');
-  voile.innerHTML = gagne
+  voile.innerHTML = '<div class="dedans">' + (gagne
     ? '<h1>BUBBLE TIM A GAGNE !</h1><p>Le chat rose est battu<br>Score : '+score+'</p><p class="gros">Appuie sur R</p><p>1 FACILE &nbsp; 2 NORMAL &nbsp; 3 COSTAUD</p>'
-    : '<h1 style="color:#ff7a6b">TIM EST TOMBE</h1><p>Score : '+score+'</p><p class="gros">Appuie sur R</p><p>1 FACILE &nbsp; 2 NORMAL &nbsp; 3 COSTAUD</p>';
+    : '<h1 style="color:#ff7a6b">TIM EST TOMBE</h1><p>Score : '+score+'</p><p class="gros">Appuie sur R</p><p>1 FACILE &nbsp; 2 NORMAL &nbsp; 3 COSTAUD</p>') + '</div>';
   son(gagne?880:110, 0.5, gagne?'triangle':'sawtooth', 0.07);
 }
 
