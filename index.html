@@ -59,6 +59,10 @@ canvas{display:block;width:100%;height:auto;image-rendering:auto}
 #voile .diff .tou{height:50px;padding:0 14px;font-size:15px}
 #voile .diff .tou.on{background:var(--lumiere-forte)}
 
+#version{position:absolute;left:8px;bottom:6px;z-index:6;pointer-events:none;
+         font-family:var(--police);font-size:12px;font-weight:800;letter-spacing:1px;
+         color:var(--creme);opacity:.35;text-shadow:0 2px 0 rgba(42,31,45,.55)}
+
 #pad{display:flex;justify-content:space-between;align-items:center;gap:12px;
      width:100%;max-width:560px}
 .croix{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,50px);gap:6px}
@@ -113,6 +117,7 @@ body.plein #pad,body.plein #aide{display:none}
       <p class="gros">Appuie sur une touche<br>pour jouer en plein ecran</p>
       <p id="etatman">Manette : je cherche...</p>
     </div>
+    <div id="version">v15</div>
   </div>
 
   <div id="pad">
